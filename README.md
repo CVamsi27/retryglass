@@ -4,73 +4,65 @@ Find where a BullMQ retry duplicates, loses or leaves incomplete declared busine
 
 [![CI](https://github.com/CVamsi27/retryglass/actions/workflows/ci.yml/badge.svg)](https://github.com/CVamsi27/retryglass/actions/workflows/ci.yml)
 
-Public alpha for synthetic/local testing. Use Node 24.22.1 (`.node-version`). Installation from source and local tarballs is supported; the scoped package names are not published to npm. [GitHub releases](https://github.com/CVamsi27/retryglass/releases) provide verified alpha tarballs when a release is available.
+Public alpha for synthetic/local testing. Use Node 24.22.1. GitHub release packages are the supported installation path; npm registry publication is deferred. Independent adoption remains unvalidated.
 
-## Clone and run
+## Try the starter without cloning
+
+From your own test project:
 
 ```sh
-git clone https://github.com/CVamsi27/retryglass.git
-cd retryglass
-npm install --global pnpm@11.23.0
-pnpm install --frozen-lockfile --ignore-scripts
-pnpm check
-node dist/src/cli.js init --target ./my-rehearsal
-node dist/src/cli.js validate --scenario ./my-rehearsal/scenario.json
+npm install --save-dev --ignore-scripts https://github.com/CVamsi27/retryglass/releases/download/v0.1.0-alpha.1/retryglass-0.1.0-alpha.1.tgz
+npx --no-install retryglass init --target ./my-rehearsal
+npx --no-install retryglass validate --scenario ./my-rehearsal/scenario.json
 ```
 
-The example target must be new. Container-backed commands below require OrbStack and explicit local image preparation. They use the Docker-compatible CLI connected to OrbStack; Docker Desktop is not required. Missing engine, browser, image, collector or cleanup evidence remains a failure.
+The target must be new. These commands create and validate synthetic fixtures; they do not run a processor, connect to production services or require a container engine. No source checkout or pnpm installation is needed to use the installed CLI. The [release](https://github.com/CVamsi27/retryglass/releases/tag/v0.1.0-alpha.1) includes a tarball checksum.
 
-To use a tarball in another project, download this project's `.tgz` from its release and run `npm install --save-dev /absolute/path/to/the-downloaded.tgz`. Install `vitest@5.0.5` explicitly in the consumer project when running exported tests.
+## Run a real rehearsal through OrbStack
 
-See [contributing](CONTRIBUTING.md), [security reporting](SECURITY.md), [changes](CHANGELOG.md) and [verification](docs/verification.md). Platform and adoption claims remain limited to recorded observations. These are ESM packages; the verified type-consumer profile is ESM/NodeNext. CommonJS compatibility is not promised; use dynamic import where needed.
+Start OrbStack, select its compatible client and explicitly prepare local images:
+
+```sh
+orbctl start docker
+export RETRYGLASS_CONTAINER_CLI=/absolute/path/to/docker
+export RETRYGLASS_CONTAINER_HOST="unix://${HOME}/.orbstack/run/docker.sock"
+env -u DOCKER_CONTEXT DOCKER_HOST="$RETRYGLASS_CONTAINER_HOST" "$RETRYGLASS_CONTAINER_CLI" pull postgres:17-bookworm
+env -u DOCKER_CONTEXT DOCKER_HOST="$RETRYGLASS_CONTAINER_HOST" "$RETRYGLASS_CONTAINER_CLI" pull redis:7-bookworm
+env -u DOCKER_CONTEXT DOCKER_HOST="$RETRYGLASS_CONTAINER_HOST" "$RETRYGLASS_CONTAINER_CLI" pull node:24-bookworm-slim
+npx --no-install retryglass doctor --scenario ./my-rehearsal/scenario.json
+npx --no-install retryglass sweep --scenario ./my-rehearsal/scenario.json
+npx --no-install retryglass sweep --scenario ./my-rehearsal/scenario-buggy.json
+```
+
+Use a real compatible executable path in the export. `doctor` only inventories prerequisites and can report the trusted tool image missing before the first sweep builds it. It never pulls or builds an image. The corrected sweep exits 0; the buggy sweep exits 1 for an observed duplicate provider effect. Setup/cleanup failures exit 2; incomplete evidence exits 3. The standalone `demo` covers only a synthetic HTTP simulator and intentionally exits 3; it is not a complete crash/retry rehearsal.
+
+Application code executes only in constrained disposable cells. Docker Desktop and Compose are not required. Keep source mounts, sockets, host environment values, production data and application boot files out of workers.
+
+Read [setup and CI use](docs/setup.md) to retain an observed finding as a normal Vitest test; install `vitest@5.0.5` explicitly in that consumer. [Contributing](CONTRIBUTING.md) covers source setup. [Security reporting](SECURITY.md) · [Changelog](CHANGELOG.md) · [Verification](docs/verification.md). The package is ESM with the verified ESM/NodeNext type-consumer profile; CommonJS compatibility is not promised.
 
 Find duplicate or missing effects in a BullMQ worker retry using synthetic PostgreSQL, Redis and an HTTP simulator. A crash sweep discovers settled `pg` queries, `fetch` calls and BullMQ `Queue.add` operations, kills the worker at each observed point, and retries the same persisted job in a fresh worker.
 
 The report preserves before, partial and final row projections, HTTP attempts, simulator-applied operations, output jobs and job identity. These are observations of declared surfaces, not a production safety verdict. Other transports and direct IP sockets are outside the coverage promise; detected unsupported operations make coverage partial.
 
-## Start locally with OrbStack
+## Work from source
 
-Requires Node 24.22.1, pnpm 11.23.0 and a running OrbStack engine with its Docker-compatible CLI. Docker Desktop and Compose are not required. Service images are local and synthetic.
+Contributor work uses Node 24.22.1 and pnpm 11.23.0:
 
 ```sh
-pnpm install --frozen-lockfile
+git clone https://github.com/CVamsi27/retryglass.git
+cd retryglass
+pnpm install --frozen-lockfile --ignore-scripts
 pnpm check
-orb start
-# These commands use the Docker-compatible client connected to OrbStack.
-docker pull postgres:17-bookworm
-docker pull redis:7-bookworm
-docker pull node:24-bookworm-slim
 node dist/src/cli.js --help
 ```
 
-When developing this checkout, invoke the compiled CLI directly:
-
-```sh
-node dist/src/cli.js init --target ./my-rehearsal
-node dist/src/cli.js validate --scenario ./my-rehearsal/scenario.json
-node dist/src/cli.js doctor --scenario ./my-rehearsal/scenario.json
-node dist/src/cli.js sweep --scenario ./my-rehearsal/scenario.json
-node dist/src/cli.js sweep --scenario ./my-rehearsal/scenario-buggy.json
-```
-
-`doctor` inventories prerequisites without pulling images, building or running application code. The first bundled sweep builds the trusted tool image from shipped artifacts and the installed runtime dependency closure. A missing local tool image before that first build is expected. `init` refuses existing directories; `validate` reads JSON and contained synthetic SQL without importing a processor.
-
-The corrected example exits 0. The buggy example uses a fresh provider key on retry and exits 1 with `one-provider-action` failing at and after the provider boundary. Exit 2 means setup or cleanup failed; exit 3 means evidence is incomplete. Evaluated violations remain visible even when another sweep point is incomplete.
-
-For an explicit client/endpoint, set these variables on the supervisor:
-
-```sh
-export RETRYGLASS_CONTAINER_CLI=/absolute/path/to/docker
-export RETRYGLASS_CONTAINER_HOST="unix://$HOME/.orbstack/run/docker.sock"
-```
-
-They select the OrbStack endpoint without changing global context and are never passed into a worker. The compatibility client is still named `docker`; container execution is provided by OrbStack.
+Use `node dist/src/cli.js` in place of `npx --no-install retryglass` for the starter/rehearsal commands above. The compiled CLI and installed CLI expose the same commands. Keep generated fixtures and reports out of version control. See [contributing](CONTRIBUTING.md) for the complete source/package gates.
 
 ## Keep a finding as a test
 
 ```sh
-node dist/src/cli.js inspect --report .retryglass/runs/<run-id>/report.json
-node dist/src/cli.js export --run <run-id> --crash-point cp-03 --target ./regression/invoice
+npx --no-install retryglass inspect --report .retryglass/runs/<run-id>/report.json
+npx --no-install retryglass export --run <run-id> --crash-point cp-03 --target ./regression/invoice
 ```
 
 The exported fixture includes the preserved scenario and SQL, a manifest, and a normal Vitest test importing `retryglass`. Install the local tarball and Vitest in its consumer project. The test fails for the buggy worker and passes after the worker is corrected. It requires stable discovery, the same selected seam, verified kill/recovery, all declared assertions and completed cleanup. An intentionally selected point does not establish coverage for omitted points.

@@ -1,5 +1,13 @@
 # Public alpha verification
 
+## GitHub installation first — 5 November 2026
+
+The README/setup guide now start from the existing immutable alpha.1 GitHub tarball. This is a documentation change; runtime behavior, package version, tag and release assets are unchanged. npm registry publication is deferred by owner choice.
+
+Current verification passed: `pnpm check` (161 tests across 20 files, typecheck and build), and `pnpm test:integration` (11 real tests across five files on macOS arm64 through OrbStack; zero skipped). An unrelated npm consumer anonymously downloaded the public tarball and checksum, verified SHA-256, and installed with lifecycle scripts disabled. With no source checkout or pnpm on its PATH, its installed `init`, `validate` and `doctor` commands worked. The HTTP-only `demo` returned partial evidence/exit 3 as documented.
+
+The same public consumer ran the generated corrected and buggy scenarios through OrbStack: five crash points each, exits 0 and 1 respectively, complete declared-surface coverage, expected assertion states and completed cleanup. These maintainer checks do not count as independent adoption. Local proof JSON stays ignored under `.retryglass/verification/`; no run artifact or credentials are committed. The source CI badge reports current-head checks separately from the existing alpha.1 release revision below.
+
 Date: 5 November 2026. Local profile: Node 24.22.1, pnpm 11.23.0, macOS arm64, OrbStack 2.2.5 / compatible engine 29.8.2. The selected profile uses PostgreSQL 17/bookworm, Redis 7/bookworm and a Node 24/bookworm trusted image. Base images/caches were warm.
 
 ## Required commands

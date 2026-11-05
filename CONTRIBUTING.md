@@ -9,7 +9,7 @@ pnpm test:integration
 node scripts/verify-package.mjs --manager all --containers
 ```
 
-Prepare OrbStack images or the matching Playwright browser explicitly as documented in the README. Record exactly which checks passed, failed or were blocked. Missing prerequisites and incomplete evidence must remain nonzero.
+Prepare the three base images explicitly through OrbStack as documented in the README. Record exactly which checks passed, failed or were blocked. Missing prerequisites and incomplete evidence must remain nonzero.
 
 For a bug, provide a minimal synthetic fixture, exact command, versions, expected behavior and observed result. Add a regression that fails before a behavior fix and passes after it. Keep application execution within the documented boundary. Do not include production data, credentials, raw environment dumps or application boot files.
 

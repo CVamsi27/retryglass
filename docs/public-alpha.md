@@ -1,5 +1,7 @@
 # Public alpha readiness
 
+GitHub release packages are the owner's selected installation path; npm publication is deferred. The README and setup guide now begin with the existing pinned alpha.1 tarball. An independent public consumer verified its checksum, installed init/validate/doctor, the HTTP demo's partial exit 3, and complete real corrected/buggy sweeps with exits 0/1 through OrbStack. The documentation update changes no runtime behavior, package version, existing tag or release asset. See [verification](verification.md) for the current source/real-container gates.
+
 The initial source revision `9683ac96393dbe4d88280551cb1d44a5fcf1df06` passed [hosted CI](https://github.com/CVamsi27/retryglass/actions/runs/42038619026) on Ubuntu 24.04 with Node 24.22.1. Source checks and independent package consumers passed. This hosted job does not run a Linux container engine. Real container compatibility remains the local macOS arm64 OrbStack profile.
 
 Local source and package gates passed before publication. Retryglass additionally passed 161 unit tests, 11 real-container cases and 20/20 same-job crash/retry repetitions. The other tools passed 22 Deployproof, 20 Rolloutproof and 19 Revokeproof behavior tests, their package consumers and real integration. Rolloutproof's extra real worker isolation probe passed all five assertions.

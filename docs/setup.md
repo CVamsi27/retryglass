@@ -1,18 +1,20 @@
 # Setup and CI use
 
-Use Node 24.22.1, pnpm 11.23.0 and OrbStack with a working Docker-compatible client. The verified local profile is macOS arm64; native Linux/amd64 CI remains unverified. See [measured gates](verification.md) and [operations](operations.md) for limits and cleanup.
+Use Node 24.22.1. Source contributors use pnpm 11.23.0; real rehearsals need OrbStack with a working Docker-compatible client. The installed CLI needs no pnpm installation. The verified real-container profile is macOS arm64; native Linux/amd64 integration remains unverified. See [measured gates](verification.md) and [operations](operations.md) for limits and cleanup.
 
 ## From this checkout
 
 ```sh
 pnpm install --frozen-lockfile --ignore-scripts
 pnpm check
-orb start
-docker pull postgres:17-bookworm
-docker pull redis:7-bookworm
-docker pull node:24-bookworm-slim
 node dist/src/cli.js init --target ./my-rehearsal
 node dist/src/cli.js validate --scenario ./my-rehearsal/scenario.json
+```
+
+Prepare OrbStack and its local images with the README's explicit client/endpoint commands before running a sweep:
+
+```sh
+node dist/src/cli.js doctor --scenario ./my-rehearsal/scenario.json
 node dist/src/cli.js sweep --scenario ./my-rehearsal/scenario.json
 ```
 
@@ -20,21 +22,26 @@ The `docker` commands use the compatible client connected to OrbStack. If needed
 
 ## Install into an independent test project
 
-No registry publication is required. Pack this repository after `pnpm check`, then install that tarball in a separate project:
+GitHub release packages are the supported path; npm registry publishing is deferred by the owner. Node 24.22.1 is required. No clone or pnpm installation is needed for the installed CLI:
 
 ```sh
-# In the Retryglass checkout; prepack builds the shipped JavaScript.
-npm pack
-
-# In your separate test project, using the actual tarball path:
-npm install --save-dev /absolute/path/retryglass-0.1.0-alpha.1.tgz vitest@5.0.5
-npx retryglass --help
-npx retryglass init --target ./my-rehearsal
-npx retryglass validate --scenario ./my-rehearsal/scenario.json
-npx retryglass sweep --scenario ./my-rehearsal/scenario.json
+npm install --save-dev --ignore-scripts https://github.com/CVamsi27/retryglass/releases/download/v0.1.0-alpha.1/retryglass-0.1.0-alpha.1.tgz vitest@5.0.5
+npx --no-install retryglass --help
+npx --no-install retryglass init --target ./my-rehearsal
+npx --no-install retryglass validate --scenario ./my-rehearsal/scenario.json
 ```
 
-The generated starter includes a synthetic corrected/buggy pair, SQL, a normal Vitest test and a pure-processor image recipe. Select compiled modules explicitly; keep application boot files, production services, credentials and customer records out of the rehearsal.
+`init` refuses an existing target. It writes synthetic fixture files; `validate` reads JSON and contained SQL. Neither command imports the processor or runs a container. Use `--no-install` to ensure npx selects the package you installed. The release includes `SHA256SUMS.txt`; source developers can still run `pnpm check` and `npm pack` to create their own local tarball.
+
+Before a real sweep, prepare OrbStack and its three base images using the README's explicit client/endpoint commands. Then run:
+
+```sh
+npx --no-install retryglass doctor --scenario ./my-rehearsal/scenario.json
+npx --no-install retryglass sweep --scenario ./my-rehearsal/scenario.json
+npx --no-install retryglass sweep --scenario ./my-rehearsal/scenario-buggy.json
+```
+
+The generated starter includes a synthetic corrected/buggy pair, SQL, a normal Vitest test and a pure-processor image recipe. Select compiled modules explicitly; keep application boot files, production services, credentials and customer records out of the rehearsal. `doctor` may report the trusted tool image missing before the first sweep builds it. This is a prerequisite observation, not a failed application test. The separate HTTP-only `demo` intentionally reports partial evidence and exits 3.
 
 ## Ordinary CI commands
 
