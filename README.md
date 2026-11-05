@@ -87,3 +87,12 @@ node scripts/verify-package.mjs --manager all --containers
 The package verifier installs a tarball into independent npm and pnpm projects, checks the real installed CLI/API/starter, and optionally runs the synthetic duplicate sweep plus buggy/corrected exported tests. Nothing is published. Local reports and verification artifacts stay under ignored `.retryglass/`.
 
 See [setup and CI use](docs/setup.md), [current measured gates](docs/verification.md), [scenario reference](docs/scenarios.md), [operations](docs/operations.md), [capture boundaries](docs/capture-boundaries.md), [architecture](docs/architecture.md). Independent adoption and retained use are unvalidated. Related implementations are separate projects: [Deployproof](https://github.com/CVamsi27/deployproof), [Rolloutproof](https://github.com/CVamsi27/rolloutproof) and [Revokeproof](https://github.com/CVamsi27/revokeproof). The optional [developer pain lab](https://github.com/CVamsi27/developer-pain-lab) holds research, historical evidence and aggregate commands.
+
+## Verified alpha profiles
+
+| Profile | Verified scope |
+| --- | --- |
+| Ubuntu 24.04, Node 24.22.1, hosted GitHub CI | Source checks and independent packed consumers |
+| macOS arm64, Node 24.22.1, OrbStack | Local declared container/browser integration described in verification |
+
+This hosted job does not run a Linux container engine. Real container compatibility remains the local macOS arm64 OrbStack profile. See [public alpha readiness](docs/public-alpha.md) for immutable CI evidence, distribution and remaining gates. Other runtime/OS/engine combinations remain unverified.

@@ -33,7 +33,9 @@
     "docs/verification.md",
     "CONTRIBUTING.md",
     "SECURITY.md",
-    "CHANGELOG.md"
+    "CHANGELOG.md",
+    "docs/ci.md",
+    "docs/public-alpha.md"
   ],
   "scripts": {
     "typecheck": "tsc --noEmit",
