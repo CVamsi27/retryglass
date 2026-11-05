@@ -1,0 +1,75 @@
+{
+  "name": "retryglass",
+  "version": "0.1.0-alpha.1",
+  "type": "module",
+  "description": "Local crash-point sweeps and same-job retry regression tests for BullMQ workers",
+  "license": "Apache-2.0",
+  "engines": {
+    "node": "^24.22.1"
+  },
+  "packageManager": "pnpm@11.23.0",
+  "bin": {
+    "retryglass": "dist/src/cli.js"
+  },
+  "main": "./dist/src/index.js",
+  "types": "./dist/src/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/src/index.d.ts",
+      "import": "./dist/src/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "templates",
+    "examples",
+    "README.md",
+    "LICENSE",
+    "pnpm-lock.yaml",
+    "docs/setup.md",
+    "docs/scenarios.md",
+    "docs/operations.md",
+    "docs/capture-boundaries.md",
+    "docs/verification.md",
+    "CONTRIBUTING.md",
+    "SECURITY.md",
+    "CHANGELOG.md"
+  ],
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "build": "tsc -p tsconfig.build.json",
+    "test": "vitest run",
+    "test:integration": "vitest run --config vitest.integration.config.ts",
+    "check": "pnpm run typecheck && pnpm test && pnpm run build",
+    "demo": "node dist/src/cli.js demo",
+    "doctor": "node dist/src/cli.js doctor",
+    "sweep": "node dist/src/cli.js sweep",
+    "rehearse": "node dist/src/cli.js run",
+    "report": "node dist/src/cli.js inspect",
+    "export": "node dist/src/cli.js export",
+    "init:scenario": "node dist/src/cli.js init",
+    "validate": "node dist/src/cli.js validate",
+    "prepack": "pnpm run build",
+    "verify:package": "node scripts/verify-package.mjs"
+  },
+  "dependencies": {
+    "bullmq": "5.81.5",
+    "ioredis": "5.11.1",
+    "pg": "8.17.1",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@types/node": "24.19.2",
+    "@types/pg": "8.23.1",
+    "typescript": "5.9.3",
+    "vitest": "5.0.5"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/CVamsi27/retryglass.git"
+  },
+  "homepage": "https://github.com/CVamsi27/retryglass#readme",
+  "bugs": {
+    "url": "https://github.com/CVamsi27/retryglass/issues"
+  }
+}

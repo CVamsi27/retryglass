@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "scenarioId": "invoice-ack-loss-stable",
+  "experiment": "failed-retry",
+  "worker": {
+    "image": "retryglass-tool:0.1.0-alpha.1",
+    "processor": "dist/examples/invoice/corrected.js",
+    "revision": "example-invoice-v1"
+  },
+  "fixture": {
+    "schema": "schema.sql",
+    "seed": "seed.sql",
+    "expectedRows": { "public.operations": 1, "public.invoices": 0 }
+  },
+  "job": {
+    "name": "invoice",
+    "id": "job-17",
+    "operationKey": "op-17",
+    "data": { "operationKey": "op-17", "recipient": "synthetic@example.invalid" }
+  },
+  "tables": [
+    { "table": "public.operations", "key": ["operation_key"], "columns": ["operation_key", "total_cents"] },
+    { "table": "public.invoices", "key": ["operation_key"], "columns": ["operation_key", "status"] }
+  ],
+  "outputQueues": ["reminders"],
+  "provider": { "idempotent": true, "loseFirstAcknowledgement": true },
+  "rules": [
+    { "id": "first-fails", "kind": "job_state", "attempt": 1, "equals": "failed" },
+    { "id": "retry-completes", "kind": "job_state", "attempt": 2, "equals": "completed" },
+    { "id": "one-invoice", "kind": "row_count", "table": "public.invoices", "equals": 1 },
+    { "id": "invoice-complete", "kind": "row_value", "table": "public.invoices", "key": { "operation_key": "op-17" }, "column": "status", "equals": "complete" },
+    { "id": "both-requests-observed", "kind": "required_http", "minimum": 2 },
+    { "id": "bounded-requests", "kind": "http_attempts_max", "maximum": 2 },
+    { "id": "one-provider-action", "kind": "applied_count", "equals": 1 },
+    { "id": "one-reminder", "kind": "output_count", "queue": "reminders", "equals": 1 }
+  ]
+}

@@ -1,0 +1,5 @@
+engineStrict: true
+saveExact: true
+allowBuilds:
+  # Optional MessagePack acceleration; use the portable JavaScript implementation.
+  msgpackr-extract: false

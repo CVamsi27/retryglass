@@ -1,0 +1,28 @@
+name: OrbStack integration
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: orbstack-integration
+  cancel-in-progress: false
+jobs:
+  integration:
+    if: github.actor == github.repository_owner
+    runs-on: [self-hosted, macOS, ARM64, orbstack]
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24.22.1'
+          package-manager-cache: false
+      - run: npm install --global pnpm@11.23.0
+      - run: pnpm install --frozen-lockfile --ignore-scripts
+      - run: pnpm check
+      - run: pnpm test:integration
+        env:
+          RETRYGLASS_CRASH_REPEAT: '20'
+      - run: node scripts/verify-package.mjs --manager all --containers
