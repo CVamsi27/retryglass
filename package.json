@@ -1,6 +1,6 @@
 {
   "name": "retryglass",
-  "version": "0.1.0-alpha.1",
+  "version": "0.1.0-alpha.2",
   "type": "module",
   "description": "Local crash-point sweeps and same-job retry regression tests for BullMQ workers",
   "license": "Apache-2.0",
@@ -27,6 +27,7 @@
     "LICENSE",
     "pnpm-lock.yaml",
     "docs/setup.md",
+    "docs/pilot.md",
     "docs/scenarios.md",
     "docs/operations.md",
     "docs/capture-boundaries.md",

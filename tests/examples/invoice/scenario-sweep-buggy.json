@@ -3,7 +3,7 @@
   "scenarioId": "invoice-ack-loss-sweep-buggy",
   "experiment": "crash-sweep",
   "worker": {
-    "image": "retryglass-tool:0.1.0-alpha.1",
+    "image": "retryglass-tool:0.1.0-alpha.2",
     "processor": "dist/examples/invoice/buggy.js",
     "revision": "example-invoice-v1-buggy"
   },

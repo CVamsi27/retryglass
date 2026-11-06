@@ -61,9 +61,10 @@ async function observeJob(cell: Cell, scenario: Scenario): Promise<ObservedJob |
   }
 }
 
-export async function waitForWorkerExit(cell: Cell, deadlineMs = 30_000): Promise<boolean> {
+export async function waitForWorkerExit(cell: Cell, deadlineMs = 30_000, signal?: AbortSignal): Promise<boolean> {
   const deadline = Date.now() + deadlineMs;
   for (;;) {
+    signal?.throwIfAborted();
     if (!await isWorkerRunning(cell)) return true;
     if (Date.now() >= deadline) return false;
     await new Promise(resolve => setTimeout(resolve, 250));
@@ -75,9 +76,9 @@ export async function waitForWorkerExit(cell: Cell, deadlineMs = 30_000): Promis
  * whether the crash is verified: exit 137, marker for exactly this crash point, and the input
  * job still present under the same jobId with the same business key.
  */
-export async function verifyCrash(cell: Cell, scenario: Scenario, crashAfter: number): Promise<CrashVerification> {
+export async function verifyCrash(cell: Cell, scenario: Scenario, crashAfter: number, signal?: AbortSignal): Promise<CrashVerification> {
   const reasons: string[] = [];
-  const exited = await waitForWorkerExit(cell);
+  const exited = await waitForWorkerExit(cell, undefined, signal);
   if (!exited) reasons.push(`worker did not exit within the deadline (CRASH_AFTER=${crashAfter})`);
   const logs = await readWorkerLogs(cell).catch(() => '');
   const stop = await stopWorker(cell, 'SIGTERM'); // inspects then removes the crashed container
@@ -108,14 +109,16 @@ export async function verifyCrash(cell: Cell, scenario: Scenario, crashAfter: nu
 export async function recoverStalledJob(
   cell: Cell,
   scenario: Scenario,
-  options?: { deadlineMs?: number },
+  options?: { deadlineMs?: number; signal?: AbortSignal },
 ): Promise<RecoveryResult> {
   const deadlineMs = options?.deadlineMs ?? 15_000;
   const started = Date.now();
+  options?.signal?.throwIfAborted();
   await startWorker(cell, scenario, null, { crashAfter: 0 });
   let job: ObservedJob | null = null;
   const deadline = started + deadlineMs;
   for (;;) {
+    options?.signal?.throwIfAborted();
     job = await observeJob(cell, scenario);
     if (job?.state === 'failed') break;
     if (Date.now() >= deadline) break;

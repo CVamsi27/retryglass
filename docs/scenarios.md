@@ -13,7 +13,7 @@ environment configuration to discover settings; the file is validated before any
   "schemaVersion": 1,
   "scenarioId": "invoice-ack-loss-stable",
   "experiment": "failed-retry",
-  "worker": { "image": "retryglass-tool:0.1.0-alpha.1", "processor": "dist/examples/invoice/corrected.js", "revision": "example-invoice-v1" },
+  "worker": { "image": "retryglass-tool:0.1.0-alpha.2", "processor": "dist/examples/invoice/corrected.js", "revision": "example-invoice-v1" },
   "fixture": { "schema": "schema.sql", "seed": "seed.sql", "expectedRows": { "public.operations": 1, "public.invoices": 0 } },
   "job": { "name": "invoice", "id": "job-17", "operationKey": "op-17", "data": { "operationKey": "op-17", "recipient": "synthetic@example.invalid" } },
   "tables": [

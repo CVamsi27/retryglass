@@ -36,7 +36,7 @@ JSON/Markdown result has independent execution, coverage, assertion and cleanup 
 
 ## Implementation notes (2026-10-30)
 
-- The cell is created with `docker` argument arrays (no Compose file); `templates/collector.Dockerfile` builds `retryglass-tool:0.1.0-alpha.1` from the shipped `dist`, synthetic `examples` and a staged closure of resolved production dependencies, with internal links and no external pnpm store links. It never installs packages.
+- The cell is created with `docker` argument arrays (no Compose file); `templates/collector.Dockerfile` builds `retryglass-tool:0.1.0-alpha.2` from the shipped `dist`, synthetic `examples` and a staged closure of resolved production dependencies, with internal links and no external pnpm store links. It never installs packages.
 - `collector-entry` gained a `probe` command: a TCP connect from the trusted collector to a cell service, used for readiness without touching the simulator ledger.
 - The collector connects as `retryglass_collector` (CREATEROLE, `pg_signal_backend`, `SELECT` only), not as the worker role; the worker role is unique per run and granted `SELECT` on all fixture tables plus `INSERT`/`UPDATE` (no DDL).
 - `runScenario` rebuilds the local tool image when the scenario uses it, using the shipped `dist`; source development must build first. `isWorkerRunning` lets job-state polling fail fast when the worker container exited without a terminal state.

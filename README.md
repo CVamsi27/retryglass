@@ -11,12 +11,12 @@ Public alpha for synthetic/local testing. Use Node 24.22.1. GitHub release packa
 From your own test project:
 
 ```sh
-npm install --save-dev --ignore-scripts https://github.com/CVamsi27/retryglass/releases/download/v0.1.0-alpha.1/retryglass-0.1.0-alpha.1.tgz
+npm install --save-dev --ignore-scripts https://github.com/CVamsi27/retryglass/releases/download/v0.1.0-alpha.2/retryglass-0.1.0-alpha.2.tgz
 npx --no-install retryglass init --target ./my-rehearsal
 npx --no-install retryglass validate --scenario ./my-rehearsal/scenario.json
 ```
 
-The target must be new. These commands create and validate synthetic fixtures; they do not run a processor, connect to production services or require a container engine. No source checkout or pnpm installation is needed to use the installed CLI. The [release](https://github.com/CVamsi27/retryglass/releases/tag/v0.1.0-alpha.1) includes a tarball checksum.
+The target must be new. These commands create and validate synthetic fixtures; they do not run a processor, connect to production services or require a container engine. No source checkout or pnpm installation is needed to use the installed CLI. The [release](https://github.com/CVamsi27/retryglass/releases/tag/v0.1.0-alpha.2) includes a tarball checksum.
 
 ## Run a real rehearsal through OrbStack
 
@@ -56,16 +56,20 @@ pnpm check
 node dist/src/cli.js --help
 ```
 
-Use `node dist/src/cli.js` in place of `npx --no-install retryglass` for the starter/rehearsal commands above. The compiled CLI and installed CLI expose the same commands. Keep generated fixtures and reports out of version control. See [contributing](CONTRIBUTING.md) for the complete source/package gates.
+Use `node dist/src/cli.js` in place of `npx --no-install retryglass` for the starter/rehearsal commands above. The compiled CLI and installed CLI expose the same commands. Store local run reports in the ignored `.retryglass/` directory. See [contributing](CONTRIBUTING.md) for the complete source/package gates.
 
 ## Keep a finding as a test
+
+For the [first integration trial](docs/pilot.md), adapt one pure BullMQ processor, declare a business effect, and keep a single verified crash point in the normal Vitest suite. Use a full sweep to discover points. Use the exported test to rehearse the selected point on a later change.
 
 ```sh
 npx --no-install retryglass inspect --report .retryglass/runs/<run-id>/report.json
 npx --no-install retryglass export --run <run-id> --crash-point cp-03 --target ./regression/invoice
+npm install --save-dev --ignore-scripts vitest@5.0.5
+npx --no-install vitest run ./regression/invoice/retry.test.ts
 ```
 
-The exported fixture includes the preserved scenario and SQL, a manifest, and a normal Vitest test importing `retryglass`. Install the local tarball and Vitest in its consumer project. The test fails for the buggy worker and passes after the worker is corrected. It requires stable discovery, the same selected seam, verified kill/recovery, all declared assertions and completed cleanup. An intentionally selected point does not establish coverage for omitted points.
+Replace `<run-id>` and `cp-03` with the run and point you observed. Commit the reviewed synthetic regression fixture with your normal tests. Its scenario, SQL, manifest and Vitest test preserve the selected seam and business assertions. A pass requires stable discovery, verified recovery and completed cleanup for that selected point.
 
 ## Verify the implementation
 

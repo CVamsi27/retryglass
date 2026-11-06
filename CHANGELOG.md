@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.0-alpha.2 — 2026-11-06
+
+Handle SIGINT and SIGTERM during runs and sweeps with scoped cleanup and preserved evidence. Update the trusted image tag and document the selected-point trial workflow.
+
 ## Unreleased documentation
 
 Lead with the existing GitHub alpha.1 package installation and installed starter/validation commands. Document explicit OrbStack client/endpoint preparation, the read-only prerequisite check and the HTTP demo's honest partial exit 3. Clarify contributor setup separately. Verify public installed corrected/buggy sweeps without changing runtime behavior, version, tag or existing release assets. npm publication remains deferred.

@@ -211,7 +211,8 @@ export async function waitForDatabaseReady(container: string, timeoutMs = 60_000
   throw new Error('Disposable PostgreSQL did not become ready');
 }
 
-export async function createCell(scenario: Scenario, fixtureRoot: string, runDir: string, runId: string, customNetworkName?: string | null): Promise<Cell> {
+export async function createCell(scenario: Scenario, fixtureRoot: string, runDir: string, runId: string, customNetworkName?: string | null, signal?: AbortSignal): Promise<Cell> {
+  signal?.throwIfAborted();
   safeName(runId);
   const prefix = safeName(`retryglass-${runId}`);
   const applicationRole = `retryglass_app_${createHash('sha256').update(runId).digest('hex').slice(0, 16)}`;
@@ -229,6 +230,7 @@ export async function createCell(scenario: Scenario, fixtureRoot: string, runDir
   const create = async (resource: Resource, args: string[]) => {
     created.push(resource); // A client can fail after the daemon created the resource.
     await preserveResources();
+    signal?.throwIfAborted();
     await must(args, '', 30_000);
   };
   try {
@@ -241,6 +243,7 @@ export async function createCell(scenario: Scenario, fixtureRoot: string, runDir
       '--env', 'PGDATA=/var/lib/postgresql/data/pgdata', '--env', 'POSTGRES_DB=retryglass', '--env', `POSTGRES_PASSWORD=${postgresPassword}`, postgres,
     ]);
     await waitForDatabaseReady(cell.postgresContainerId);
+    signal?.throwIfAborted();
     const sql = async (body: string) => must(['exec', '-i', cell.postgresContainerId, 'psql', '-X', '-q', '-v', 'ON_ERROR_STOP=1', '-U', 'postgres', '-d', 'retryglass'], body, 30_000);
     await sql(`CREATE ROLE ${applicationRole} LOGIN PASSWORD '${cell.applicationPassword}';\nCREATE ROLE retryglass_collector LOGIN CREATEROLE PASSWORD '${collectorPassword}';\nGRANT ${applicationRole} TO retryglass_collector WITH ADMIN TRUE;\nGRANT ${applicationRole} TO retryglass_collector WITH INHERIT FALSE;\nGRANT ${applicationRole} TO retryglass_collector WITH SET FALSE;\nGRANT pg_signal_backend TO retryglass_collector;`);
     await sql(schema); await sql(seed);
@@ -265,6 +268,7 @@ export async function createCell(scenario: Scenario, fixtureRoot: string, runDir
     const readyBy = Date.now() + 30_000;
     for (const [host, port] of [['redis', 6379], ['simulator', 4010]] as const) {
       for (;;) {
+        signal?.throwIfAborted();
         try { await execCollector(cell, 'probe', { host, port }); break; }
         catch { if (Date.now() >= readyBy) throw new Error(`Disposable ${host} did not become ready`); await sleep(200); }
       }

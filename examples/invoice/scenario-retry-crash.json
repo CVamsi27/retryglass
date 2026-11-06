@@ -3,7 +3,7 @@
   "scenarioId": "invoice-retry-crash",
   "experiment": "failed-retry",
   "worker": {
-    "image": "retryglass-tool:0.1.0-alpha.1",
+    "image": "retryglass-tool:0.1.0-alpha.2",
     "processor": "dist/examples/invoice/crashes.js",
     "revision": "example-invoice-crash-v1"
   },

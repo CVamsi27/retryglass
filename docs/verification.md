@@ -1,5 +1,11 @@
 # Public alpha verification
 
+## Interruption and exported tests in alpha.2
+
+On 6 November 2026, the frozen source checks passed typecheck, production build, and all 162 tests across 20 files. The real OrbStack suite passed all 14 tests across six files on macOS arm64. It verified 20 same-job crash and recovery repetitions, cancellation during discovery and an active run, and cancellation after a sweep had already observed a duplicate effect. The interruption checks verified bounded exit, retained evidence, and cleanup of run-owned resources.
+
+Fresh npm and pnpm consumers each reproduced the duplicate at `cp-03`, exported that crash point as a Vitest regression, and verified the buggy and corrected workers. The installed HTTP-only demo continues to exit 3 with partial coverage. These are maintainer-run checks with synthetic fixtures. Independent integration and retention are recorded separately in the [trial record](https://github.com/CVamsi27/developer-pain-lab/blob/HEAD/docs/adoption-trials.md).
+
 ## GitHub installation first — 5 November 2026
 
 The README/setup guide now start from the existing immutable alpha.1 GitHub tarball. This is a documentation change; runtime behavior, package version, tag and release assets are unchanged. npm registry publication is deferred by owner choice.

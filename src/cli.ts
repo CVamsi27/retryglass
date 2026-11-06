@@ -137,7 +137,8 @@ function setupMessage(error: unknown): string {
 }
 
 /** Execute a CLI request and return its exit status; setup/tool failures always return 2. */
-export async function runCli(args: string[], output: CliOutput = { out: value => { process.stdout.write(value); }, err: value => { process.stderr.write(value); } }): Promise<number> {
+export async function runCli(args: string[], output: CliOutput = { out: value => { process.stdout.write(value); }, err: value => { process.stderr.write(value); } }, signal?: AbortSignal): Promise<number> {
+  const deadline = (ms: number) => AbortSignal.any([AbortSignal.timeout(ms), ...(signal ? [signal] : [])]);
   let json = args.includes('--json');
   try {
     if (args.length === 1 && ['--help', '-h', 'help'].includes(args[0]!)) { output.out(`${USAGE}\n${Object.values(HELP).join('\n')}\n`); return 0; }
@@ -174,7 +175,7 @@ export async function runCli(args: string[], output: CliOutput = { out: value =>
       return result.ready ? 0 : 2;
     }
     if (command === 'run') {
-      const report = await runScenario(stringOption(values, 'scenario', true)!, { outputRoot: stringOption(values, 'output-root') ?? '.retryglass', signal: AbortSignal.timeout(10 * 60_000) });
+      const report = await runScenario(stringOption(values, 'scenario', true)!, { outputRoot: stringOption(values, 'output-root') ?? '.retryglass', signal: deadline(10 * 60_000) });
       return printReport(report, json, output);
     }
     if (command === 'sweep') {
@@ -186,7 +187,7 @@ export async function runCli(args: string[], output: CliOutput = { out: value =>
         maxCrashPoints: numberOption(values, 'max-crash-points'),
         discoveryRuns: numberOption(values, 'discovery-runs'),
         crashPoints,
-        signal: AbortSignal.timeout(30 * 60_000),
+        signal: deadline(30 * 60_000),
       });
       return printReport(report, json, output);
     }
@@ -231,8 +232,18 @@ export function isEntryPoint(argv1: string | undefined, moduleUrl: string): bool
 }
 
 if (isEntryPoint(process.argv[1], import.meta.url)) {
-  runCli(process.argv.slice(2)).then(code => { process.exitCode = code; }).catch(error => {
+  const args = process.argv.slice(2);
+  const controller = new AbortController();
+  const interrupt = () => controller.abort();
+  if (args[0] === 'run' || args[0] === 'sweep') {
+    process.on('SIGINT', interrupt);
+    process.on('SIGTERM', interrupt);
+  }
+  runCli(args, undefined, controller.signal).then(code => { process.exitCode = code; }).catch(error => {
     process.stderr.write(`${error instanceof Error ? error.message : 'Retryglass command failed'}\n`);
     process.exitCode = 2;
+  }).finally(() => {
+    process.off('SIGINT', interrupt);
+    process.off('SIGTERM', interrupt);
   });
 }

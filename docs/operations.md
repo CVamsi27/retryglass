@@ -13,7 +13,7 @@ contacted, and no Docker resource outside a run's own labels is touched.
 | Node | 24.22.1 (`.node-version`); `pnpm check` enforces the engine |
 | pnpm | 11.23.0 with a frozen lockfile |
 | OrbStack engine | Reachable through its Docker-compatible client; `retryglass doctor` reports the server version |
-| Images | `postgres:17-bookworm`, `redis:7-bookworm`, `node:24-bookworm-slim` and the locally built `retryglass-tool:0.1.0-alpha.1` |
+| Images | `postgres:17-bookworm`, `redis:7-bookworm`, `node:24-bookworm-slim` and the locally built `retryglass-tool:0.1.0-alpha.2` |
 
 Docker Compose is not required: the cell is created with `docker` argument arrays only.
 
@@ -58,6 +58,8 @@ A worker container that exits without a terminal job state fails the phase immed
 not wait out the deadline. A slow attempt is bounded by a 90 s deadline and becomes `timed_out`.
 
 ## Crash sweeps
+
+The CLI treats SIGINT and SIGTERM on `run` and `sweep` as cooperative interruption. It stops scheduling cells, retains completed observations, and attempts ownership-checked cleanup. In-flight engine commands retain their existing deadlines. An interrupted run with successful cleanup exits 3 unless it already observed a violation, in which case it exits 1. Cleanup failure takes precedence with exit 2. A forced kill can leave labelled resources. Inspect the exact run labels and recorded resource manifest before manual removal.
 
 `retryglass sweep --scenario <path>` runs the same cell and barrier machinery, once per enumerated
 crash point:

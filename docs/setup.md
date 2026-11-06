@@ -25,7 +25,7 @@ The `docker` commands use the compatible client connected to OrbStack. If needed
 GitHub release packages are the supported path; npm registry publishing is deferred by the owner. Node 24.22.1 is required. No clone or pnpm installation is needed for the installed CLI:
 
 ```sh
-npm install --save-dev --ignore-scripts https://github.com/CVamsi27/retryglass/releases/download/v0.1.0-alpha.1/retryglass-0.1.0-alpha.1.tgz vitest@5.0.5
+npm install --save-dev --ignore-scripts https://github.com/CVamsi27/retryglass/releases/download/v0.1.0-alpha.2/retryglass-0.1.0-alpha.2.tgz vitest@5.0.5
 npx --no-install retryglass --help
 npx --no-install retryglass init --target ./my-rehearsal
 npx --no-install retryglass validate --scenario ./my-rehearsal/scenario.json
@@ -44,6 +44,8 @@ npx --no-install retryglass sweep --scenario ./my-rehearsal/scenario-buggy.json
 The generated starter includes a synthetic corrected/buggy pair, SQL, a normal Vitest test and a pure-processor image recipe. Select compiled modules explicitly; keep application boot files, production services, credentials and customer records out of the rehearsal. `doctor` may report the trusted tool image missing before the first sweep builds it. This is a prerequisite observation, not a failed application test. The separate HTTP-only `demo` intentionally reports partial evidence and exits 3.
 
 ## Ordinary CI commands
+
+When upgrading to alpha.2, build the current trusted image with a bundled starter sweep. Earlier exported scenarios retain their original worker image references. Keep that image available or run the export with its original package pin.
 
 On a runner with the verified OrbStack profile, provision the three base images explicitly before running integration. Keep application execution in disposable cells, even when the test runner is on the host.
 

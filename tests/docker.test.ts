@@ -64,8 +64,8 @@ process.stdin.on('end', ()=>{
   return async () => (await readFile(log, 'utf8')).trim().split('\n').filter(Boolean).map(line => JSON.parse(line) as {args:string[];input:string;host?:string});
 }
 
-const cell = (): Cell => ({runId:'test-run1',projectName:'retryglass-test-run1',runDir:'/tmp/fixture',collectorContainerId:'collector-id',postgresContainerId:'postgres-id',redisContainerId:'redis-id',simulatorContainerId:'simulator-id',networkId:'network-id',applicationRole:'rg_fixture',applicationPassword:'synthetic-app',redisPassword:'synthetic-redis',toolImage:'retryglass-tool:0.1.0-alpha.1'});
-const workerScenario = {worker:{image:'retryglass-tool:0.1.0-alpha.1',processor:'dist/examples/invoice/corrected.js'}} as Scenario;
+const cell = (): Cell => ({runId:'test-run1',projectName:'retryglass-test-run1',runDir:'/tmp/fixture',collectorContainerId:'collector-id',postgresContainerId:'postgres-id',redisContainerId:'redis-id',simulatorContainerId:'simulator-id',networkId:'network-id',applicationRole:'rg_fixture',applicationPassword:'synthetic-app',redisPassword:'synthetic-redis',toolImage:'retryglass-tool:0.1.0-alpha.2'});
+const workerScenario = {worker:{image:'retryglass-tool:0.1.0-alpha.2',processor:'dist/examples/invoice/corrected.js'}} as Scenario;
 
 test('worker uses its internal cell and immutable image, without host resources', async () => {
   const calls = await fakeDocker();

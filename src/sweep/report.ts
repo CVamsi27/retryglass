@@ -9,6 +9,7 @@ export interface SweepMeta {
   discovered: number;
   discovery: { runs: number; stable: boolean; reasons: string[]; cleanupFailed?: boolean; unsupported?: unknown[]; unknownSeams?: string[] };
   extraMissing?: string[];
+  interrupted?: boolean;
   startedAt: string;
   finishedAt: string;
   provenance?: Record<string, unknown>;
@@ -49,7 +50,7 @@ export function aggregateSweep(points: SweepCrashPoint[], meta: SweepMeta): Swee
   }
 
   const noSeams = meta.discovered === 0;
-  const coverage: Coverage = noSeams
+  const coverage: Coverage = noSeams && !meta.interrupted
     ? 'unsupported'
     : reasons.length
       ? 'partial'
@@ -72,7 +73,7 @@ export function aggregateSweep(points: SweepCrashPoint[], meta: SweepMeta): Swee
   const execution = points.length
     ? points.reduce<Execution>((worst, point) => (
       EXECUTION_RANK[point.execution] > EXECUTION_RANK[worst] ? point.execution : worst
-    ), 'completed')
+    ), meta.interrupted ? 'interrupted' : 'completed')
     : 'interrupted';
 
   const cleanup: Cleanup = meta.discovery.cleanupFailed || points.some(point => point.cleanup === 'failed')

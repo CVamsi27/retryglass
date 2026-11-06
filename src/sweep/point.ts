@@ -129,7 +129,7 @@ export async function runCrashPoint(input: CrashPointInput): Promise<PointRehear
   };
 
   try {
-    cell = await createCell(scenario, fixtureRoot, runDir, runId);
+    cell = await createCell(scenario, fixtureRoot, runDir, runId, undefined, input.signal);
     guard();
     evidence.before = await execCollector(cell, 'snapshot', {
       tables: scenario.tables, expectedRows: scenario.fixture.expectedRows,
@@ -137,8 +137,9 @@ export async function runCrashPoint(input: CrashPointInput): Promise<PointRehear
     await execCollector(cell, 'job-add', { prefix: prefixFor(cell), job: scenario.job });
 
     // Attempt 1: killed after the point's settled seam.
+    guard();
     await startWorker(cell, scenario, null, { crashAfter });
-    const crash = await verifyCrash(cell, scenario, crashAfter);
+    const crash = await verifyCrash(cell, scenario, crashAfter, input.signal);
     crashVerified = crash.crashVerified;
     exitCode = crash.exitCode;
     exitSignal = crash.exitCode === 137 ? 'SIGKILL' : null;
@@ -151,7 +152,7 @@ export async function runCrashPoint(input: CrashPointInput): Promise<PointRehear
     guard();
 
     // Recovery of the crashed job, by documented stall semantics only.
-    const recovered = await recoverStalledJob(cell, scenario);
+    const recovered = await recoverStalledJob(cell, scenario, { signal: input.signal });
     recovery = recovered.recovery;
     recoveryWaitMs = recovered.recoveryWaitMs;
     if (recovery !== 'stalled') {
@@ -193,6 +194,7 @@ export async function runCrashPoint(input: CrashPointInput): Promise<PointRehear
       }
 
       // Attempt 2 is never crashed.
+      guard();
       await startWorker(cell, scenario, null, { crashAfter: 0 });
       let terminal: TerminalObservation;
       try {
@@ -228,17 +230,21 @@ export async function runCrashPoint(input: CrashPointInput): Promise<PointRehear
   } catch (error) {
     execution = error instanceof PhaseError ? error.execution : 'interrupted';
     note(error instanceof Error ? error.message : String(error));
+    if (!cell && input.signal?.aborted && error === input.signal.reason) cleanup = 'completed';
   } finally {
     if (cell) {
       try { await destroyCell(cell); cleanup = 'completed'; }
       catch (error) { cleanup = 'failed'; note(`crash point ${point.id}: cleanup failed: ${error instanceof Error ? error.message : String(error)}`); }
     } else {
-      cleanup = 'failed';
       if (!missing.length) note(`crash point ${point.id}: the disposable cell was never created`);
     }
   }
 
-  if (execution === 'completed' && observationComplete) {
+  if (input.signal?.aborted && execution === 'completed') {
+    execution = 'interrupted';
+    note('Sweep was interrupted');
+  }
+  if (observationComplete) {
     try {
       rules = evaluate(evidence, scenario.rules);
       evaluated = true;

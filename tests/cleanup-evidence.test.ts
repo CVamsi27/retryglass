@@ -6,7 +6,7 @@ import type { Cell, Scenario } from '../src/contracts.js';
 
 const state = vi.hoisted(() => ({ reads: 0, applied: 2, workerImages: [] as string[] }));
 vi.mock('../src/docker/lifecycle.js', () => ({
-  TOOL_IMAGE: 'retryglass-tool:0.1.0-alpha.1',
+  TOOL_IMAGE: 'retryglass-tool:0.1.0-alpha.2',
   prepareImages: async () => {},
   imageIdentity: async () => `sha256:${'a'.repeat(64)}`,
   createCell: async (_scenario: Scenario, _fixtures: string, runDir: string, runId: string) => ({ runId, runDir, applicationRole: 'synthetic_app', networkId: 'synthetic-network' }),
@@ -42,6 +42,17 @@ const roots: string[] = [];
 beforeEach(() => { state.reads = 0; state.applied = 2; state.workerImages = []; });
 afterEach(async () => { await Promise.all(roots.splice(0).map(root => rm(root, { recursive: true, force: true }))); });
 async function root() { const directory = await mkdtemp(join(tmpdir(), 'retryglass-cleanup-evidence-')); roots.push(directory); return directory; }
+
+test('a cancelled rehearsal reports incomplete evidence without starting a worker', async () => {
+  const report = await runScenario(resolve('examples/invoice/scenario.json'), {
+    outputRoot: await root(), signal: AbortSignal.abort(),
+  });
+  expect(report.execution).toBe('interrupted');
+  expect(report.cleanup).toBe('completed');
+  expect(report.assertions).toBe('not_evaluated');
+  expect(state.workerImages).toEqual([]);
+  expect(exitCode(report)).toBe(3);
+});
 
 test('single-run cleanup failure retains a fully observed duplicate finding', async () => {
   const report = await runScenario(resolve('examples/invoice/scenario.json'), { outputRoot: await root() });

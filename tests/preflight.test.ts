@@ -80,11 +80,11 @@ test('doctor rejects successful wrapper chatter as unavailable daemon evidence',
 });
 
 test('doctor reports absent images separately and executes only bounded read-only probes', async () => {
-  const engine = await fakeEngine({ missing: 'retryglass-tool:0.1.0-alpha.1' });
+  const engine = await fakeEngine({ missing: 'retryglass-tool:0.1.0-alpha.2' });
   const result = await doctor({ executable: engine.executable, scenarioPath: resolve('examples/invoice/scenario-sweep.json') });
   expect(result.ready).toBe(false);
   expect(result.engine).toMatchObject({ status: 'available', version: '29.8.2' });
-  expect(result.images).toContainEqual(expect.objectContaining({ image: 'retryglass-tool:0.1.0-alpha.1', status: 'missing' }));
+  expect(result.images).toContainEqual(expect.objectContaining({ image: 'retryglass-tool:0.1.0-alpha.2', status: 'missing' }));
   const calls = (await readFile(engine.log, 'utf8')).trim().split('\n').map(line => JSON.parse(line));
   expect(calls.length).toBeGreaterThan(1);
   expect(calls.every(args => args[0] === 'info' || args[0] === 'image' && args[1] === 'inspect')).toBe(true);

@@ -21,7 +21,7 @@ test('writes a self-contained synthetic corrected/buggy starter that validates w
   const corrected = await loadScenario(join(target, 'scenario.json'));
   const buggy = await loadScenario(join(target, 'scenario-buggy.json'));
   expect(corrected.scenario.experiment).toBe('crash-sweep');
-  expect(corrected.scenario.worker.image).toBe('retryglass-tool:0.1.0-alpha.1');
+  expect(corrected.scenario.worker.image).toBe('retryglass-tool:0.1.0-alpha.2');
   expect(corrected.scenario.worker.processor).toBe('dist/examples/invoice/corrected.js');
   expect(buggy.scenario.worker.processor).toBe('dist/examples/invoice/buggy.js');
   expect(corrected.scenario.job.operationKey).toBe('op-17');

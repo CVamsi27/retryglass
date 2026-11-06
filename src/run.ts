@@ -100,6 +100,7 @@ async function runAttempt(
   runDir: string,
   signal?: AbortSignal,
 ): Promise<AttemptEvidence> {
+  signal?.throwIfAborted();
   await startWorker(cell, scenario, cell.networkId);
   let job: JobObservation;
   try {
@@ -181,11 +182,13 @@ export async function runScenario(path: string, options: RunOptions): Promise<Ru
   };
 
   try {
+    options.signal?.throwIfAborted();
     // The local example image is built from this checkout, so a stale local build must never run.
     if (scenario.worker.image === TOOL_IMAGE) await prepareImages();
     imageIds = { tool: await imageIdentity(TOOL_IMAGE), worker: await imageIdentity(scenario.worker.image) };
     const runtimeScenario: Scenario = { ...scenario, worker: { ...scenario.worker, image: imageIds.worker } };
-    cell = await createCell(runtimeScenario, inputsDir, runDir, runId);
+    cell = await createCell(runtimeScenario, inputsDir, runDir, runId, undefined, options.signal);
+    options.signal?.throwIfAborted();
     evidence.before = await execCollector(cell, 'snapshot', {
       tables: scenario.tables, expectedRows: scenario.fixture.expectedRows,
     }) as Projection[];
@@ -203,6 +206,7 @@ export async function runScenario(path: string, options: RunOptions): Promise<Ru
     }
     evidence.partial = await execCollector(cell, 'snapshot', { tables: scenario.tables }) as Projection[];
 
+    options.signal?.throwIfAborted();
     await execCollector(cell, 'resume-db', { role: cell.applicationRole });
     await simulatorControl(cell, 'resume');
     const retry = await execCollector(cell, 'job-retry', {
@@ -228,6 +232,7 @@ export async function runScenario(path: string, options: RunOptions): Promise<Ru
   } catch (error) {
     execution = classify(error);
     note(message(error));
+    if (!cell && options.signal?.aborted && error === options.signal.reason) cleanup = 'completed';
   } finally {
     if (cell) {
       try { await destroyCell(cell); cleanup = 'completed'; }
@@ -235,13 +240,14 @@ export async function runScenario(path: string, options: RunOptions): Promise<Ru
     }
   }
 
-  if (!cell) {
-    cleanup = 'failed';
-    if (!missing.length) note('The disposable cell was never created');
+  if (!cell && !missing.length) note('The disposable cell was never created');
+  if (options.signal?.aborted && execution === 'completed') {
+    execution = 'interrupted';
+    note('Rehearsal was interrupted');
   }
   let rules: RunReport['rules'] = [];
   let assertions: RunReport['assertions'] = 'not_evaluated';
-  if (execution === 'completed' && observationComplete) {
+  if (observationComplete) {
     try {
       rules = evaluate(evidence, scenario.rules);
       assertions = decideAssertions(rules);

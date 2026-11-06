@@ -39,13 +39,16 @@ async function discoveryRun(args: {
   scenario: Scenario; fixtureRoot: string; runDir: string; runId: string; signal?: AbortSignal;
 }): Promise<string> {
   const { scenario, fixtureRoot, runDir, runId } = args;
-  const cell = await createCell(scenario, fixtureRoot, runDir, runId);
+  args.signal?.throwIfAborted();
+  const cell = await createCell(scenario, fixtureRoot, runDir, runId, undefined, args.signal);
   try {
+    args.signal?.throwIfAborted();
     await execCollector(cell, 'job-add', { prefix: prefixFor(cell), job: scenario.job });
+    args.signal?.throwIfAborted();
     await startWorker(cell, scenario, cell.networkId, { crashAfter: 0 });
     const deadline = Date.now() + DISCOVERY_DEADLINE_MS;
     for (;;) {
-      if (args.signal?.aborted) throw new Error('Sweep was interrupted during discovery');
+      args.signal?.throwIfAborted();
       const state = await execCollector(cell, 'job-state', {
         prefix: prefixFor(cell), jobId: scenario.job.id,
       }) as { exists?: boolean; state?: string };
@@ -102,13 +105,15 @@ export async function runSweep(path: string, options: SweepOptions): Promise<Swe
   const extraMissing: string[] = [];
   let discoveryCleanupFailed = false;
 
-  if (scenario.worker.image === TOOL_IMAGE) await prepareImages();
-  const imageIds = { tool: await imageIdentity(TOOL_IMAGE), worker: await imageIdentity(scenario.worker.image) };
-  const runtimeScenario: Scenario = { ...scenario, worker: { ...scenario.worker, image: imageIds.worker } };
+  if (!options.signal?.aborted && scenario.worker.image === TOOL_IMAGE) await prepareImages();
+  const imageIds = options.signal?.aborted ? undefined
+    : { tool: await imageIdentity(TOOL_IMAGE), worker: await imageIdentity(scenario.worker.image) };
+  const runtimeScenario: Scenario = imageIds ? { ...scenario, worker: { ...scenario.worker, image: imageIds.worker } } : scenario;
 
   // --- Discovery: enumerate the crash points the processor actually reaches. -----------------
   const logs: string[] = [];
   for (let run = 1; run <= discoveryRuns; run++) {
+    if (options.signal?.aborted) break;
     try {
       logs.push(await discoveryRun({
         scenario: runtimeScenario, fixtureRoot: inputsDir, runDir,
@@ -117,7 +122,7 @@ export async function runSweep(path: string, options: SweepOptions): Promise<Swe
       }));
     } catch (error) {
       extraMissing.push(`discovery run ${run} failed: ${message(error)}`);
-      discoveryCleanupFailed = true;
+      discoveryCleanupFailed = !(options.signal?.aborted && error === options.signal.reason);
       break;
     }
   }
@@ -151,7 +156,7 @@ export async function runSweep(path: string, options: SweepOptions): Promise<Swe
 
   // --- Execution: one fresh cell per crash point, sequentially. -------------------------------
   let points: CrashPoint[] = discovery.points;
-  if (options.crashPoints?.length) {
+  if (!options.signal?.aborted && options.crashPoints?.length) {
     const requested = new Set(options.crashPoints);
     for (const id of requested) {
       if (!points.some(point => point.id === id)) {
@@ -216,7 +221,9 @@ export async function runSweep(path: string, options: SweepOptions): Promise<Swe
     // `missing` still state that the remaining observed points were not executed.
     restrictedTo: options.crashPoints?.length ? [...options.crashPoints] : null,
   };
-  provenance.imageIds = imageIds;
+  if (imageIds) provenance.imageIds = imageIds;
+  const interrupted = options.signal?.aborted === true;
+  if (interrupted) extraMissing.push('Sweep was interrupted');
 
   const report = validateSweepReport(sanitizeForReport(aggregateSweep(rehearsed, {
     runId,
@@ -226,6 +233,7 @@ export async function runSweep(path: string, options: SweepOptions): Promise<Swe
     discovery: { runs: logs.length, stable: discovery.stable, reasons: discovery.reasons, cleanupFailed: discoveryCleanupFailed,
       unsupported: discovery.unsupported, unknownSeams: discovery.unknownSeams },
     extraMissing,
+    interrupted,
     startedAt,
     finishedAt: new Date().toISOString(),
     provenance,

@@ -6,7 +6,7 @@ import type { Scenario } from '../src/contracts.js';
 
 const observations = vi.hoisted(() => ({ workers: [] as string[], points: [] as string[], resolutions: 0 }));
 vi.mock('../src/docker/lifecycle.js', () => ({
-  TOOL_IMAGE: 'retryglass-tool:0.1.0-alpha.1', prepareImages: async () => {},
+  TOOL_IMAGE: 'retryglass-tool:0.1.0-alpha.2', prepareImages: async () => {},
   imageIdentity: async (image: string) => image === 'synthetic-worker:v1'
     ? `sha256:${(++observations.resolutions === 1 ? 'b' : 'c').repeat(64)}` : `sha256:${'a'.repeat(64)}`,
   createCell: async (scenario: Scenario) => { observations.workers.push(scenario.worker.image); return { runId: 'synthetic-pinned' }; },

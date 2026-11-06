@@ -1,0 +1,44 @@
+name: Integration trial
+description: Share a sanitized result from trying Retryglass in your workflow.
+title: 'Trial: '
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Participation is optional. This issue is public: share sanitized summaries and synthetic reproductions only. Do not upload artifacts, credentials, environment files, private paths or customer data. A blocked result or reason for removal is useful feedback.
+  - type: input
+    id: environment
+    attributes:
+      label: Version and environment
+      description: Retryglass version, Node version and OS; no private repository URL needed.
+    validations:
+      required: true
+  - type: dropdown
+    id: stage
+    attributes:
+      label: What did you try?
+      options:
+        - Bundled synthetic demo only
+        - One application-owned synthetic check
+        - Added to the normal test or CI workflow
+        - Reran on a later relevant change
+        - Removed from the workflow
+    validations:
+      required: true
+  - type: textarea
+    id: setup
+    attributes:
+      label: Setup effort and assistance
+      description: Approximate setup/run minutes, confusing steps and help needed. Leave timing unknown if not measured.
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Result and action
+      description: Useful, unnecessary, incomplete or blocked? What changed? Include sanitized diagnostics or a synthetic reproduction only.
+    validations:
+      required: true
+  - type: textarea
+    id: comparison
+    attributes:
+      label: Existing check and later use
+      description: How does this compare with your current command? Did you keep, rerun or remove it on a later change? No later change is unobserved.

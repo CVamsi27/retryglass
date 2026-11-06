@@ -42,7 +42,7 @@ try {
     const help = await command(binary, ['--help'], consumer);
     if (!help.stdout.includes('retryglass init')) throw new Error('Installed CLI produced no command help');
     const version = (await command(binary, ['--version'], consumer)).stdout.trim();
-    if (version !== '0.1.0-alpha.1') throw new Error('Installed CLI version mismatch');
+    if (version !== '0.1.0-alpha.2') throw new Error('Installed CLI version mismatch');
     await command(binary, ['init', '--target', 'starter', '--json'], consumer);
     const validation = JSON.parse((await command(binary, ['validate', '--scenario', 'starter/scenario.json', '--json'], consumer)).stdout);
     if (!validation.valid) throw new Error('Installed starter validation failed');

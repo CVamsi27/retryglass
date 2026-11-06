@@ -37,7 +37,7 @@ Use the crash point actually reported by the buggy sweep; `cp-03` is an example 
 
 ## Adapt a pure processor in a fixture image
 
-After the bundled sweep has built `retryglass-tool:0.1.0-alpha.1`:
+After the bundled sweep has built `retryglass-tool:0.1.0-alpha.2`:
 
 ```sh
 docker build --file Dockerfile.worker --tag retryglass-fixture:local .
