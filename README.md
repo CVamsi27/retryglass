@@ -18,6 +18,8 @@ npx --no-install retryglass validate --scenario ./my-rehearsal/scenario.json
 
 The target must be new. These commands create and validate synthetic fixtures; they do not run a processor, connect to production services or require a container engine. No source checkout or pnpm installation is needed to use the installed CLI. The [release](https://github.com/CVamsi27/retryglass/releases/tag/v0.1.0-alpha.2) includes a tarball checksum.
 
+[Case study: one invoice job applies an email effect twice](docs/case-study.md). Reproduce the duplicate on OrbStack, inspect the effect ledger, and export a failing then passing Vitest test.
+
 ## Run a real rehearsal through OrbStack
 
 Start OrbStack, select its compatible client and explicitly prepare local images:
@@ -64,12 +66,13 @@ For the [first integration trial](docs/pilot.md), adapt one pure BullMQ processo
 
 ```sh
 npx --no-install retryglass inspect --report .retryglass/runs/<run-id>/report.json
+mkdir -p ./regression
 npx --no-install retryglass export --run <run-id> --crash-point cp-03 --target ./regression/invoice
 npm install --save-dev --ignore-scripts vitest@5.0.5
 npx --no-install vitest run ./regression/invoice/retry.test.ts
 ```
 
-Replace `<run-id>` and `cp-03` with the run and point you observed. Commit the reviewed synthetic regression fixture with your normal tests. Its scenario, SQL, manifest and Vitest test preserve the selected seam and business assertions. A pass requires stable discovery, verified recovery and completed cleanup for that selected point.
+Replace `<run-id>` and `cp-03` with the run and point you observed. `inspect` returns the recorded result's exit status. Create the parent directory before export and use a new target. Commit the reviewed synthetic regression fixture with your normal tests. Its scenario, SQL, manifest and Vitest test preserve the selected seam and business assertions. A pass requires stable discovery, verified recovery and completed cleanup for that selected point.
 
 ## Verify the implementation
 

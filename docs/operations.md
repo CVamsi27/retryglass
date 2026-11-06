@@ -123,7 +123,10 @@ automatic `recover`/`cleanup` subcommands are not implemented yet.
 
 ## Exporting a regression fixture
 
+Create the parent directory before exporting to a nested path. The exporter creates the new target directory itself.
+
 ```sh
+mkdir -p ./regression
 retryglass export --run <run-id> --target ./regression/invoice [--output-root <dir>] [--json]
 ```
 
@@ -144,6 +147,7 @@ no partial fixture. Reports, drafts and worker logs are never copied.
 ### One crash point
 
 ```sh
+mkdir -p ./regression
 retryglass export --run <sweep-run-id> --crash-point cp-03 --target ./regression/invoice-dup
 ```
 
